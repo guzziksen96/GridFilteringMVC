@@ -14,10 +14,10 @@ namespace GridFilteringMVC.Controllers
     {
         private MyDBContext db = new MyDBContext();
 
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
-            var departments = db.Departments.ToList();
-            var employees = db.Employees.ToList();
+            var departments = await db.Departments.ToListAsync();
+            var employees = await db.Employees.ToListAsync();
             ViewBag.Departments = new SelectList(departments, "DepartmentID", "DepartmentName");
             ViewBag.Employees = new SelectList(employees, "ID", "EmployeeName");
             ViewBag.EmployeesNames = db.Employees.Distinct().Select(i => new SelectListItem() { Text = i.EmployeeName, Value = i.ID.ToString() }).ToList();
@@ -62,22 +62,16 @@ namespace GridFilteringMVC.Controllers
             return Json(employeeViewModels, JsonRequestBehavior.AllowGet);
 
         }
-
-        [HttpPost]
+        
+        [AcceptVerbs(HttpVerbs.Post)]
         public async Task<JsonResult> AutoCompleteEmployeeName(string text)
         {
             ViewBag.EmployeesNames = db.Employees.Distinct().Select(i => new SelectListItem() { Text = i.EmployeeName, Value = i.ID.ToString() }).ToList();
 
             List<Employee> employees = await db.Employees.ToListAsync();
-
-            //if (!string.IsNullOrEmpty(text))
-            //{
-            //    employees = employees.Where(p => p.EmployeeName.StartsWith(text)).ToList();
-
-            //}
-
+            
             var employeeName = (from e in employees
-                                where e.EmployeeName.Contains(text)
+                                where e.EmployeeName.ToLower().Contains(text)
                                 select new { e.EmployeeName });
 
             return Json(employeeName, JsonRequestBehavior.AllowGet);

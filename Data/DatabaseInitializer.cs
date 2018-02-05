@@ -25,24 +25,27 @@ namespace GridFilteringMVC.Data
             departments.ForEach(d => context.Departments.AddOrUpdate(d));
             context.SaveChanges();
 
+
+            Employee manager = new Employee
+            {
+                DepartmentID = 2,
+                EmployeeName = "Igor",
+                Grade = 10,
+                HireDate = DateTime.Parse("2008-12-05"),
+                ID = 8
+            };
+
             var employees = new List<Employee>
             {
+                manager,
                 new Employee
                 {
                     DepartmentID = 1,
                     EmployeeName = "Klaudia",
                     Grade = 10,
-                    HireDate = DateTime.Parse("2011-02-05"),
-                    ID = 1
-                    //PerformanceManager =
-                    //    new Employee
-                    //    {
-                    //        DepartmentID = 2,
-                    //        EmployeeName = "Monika",
-                    //        Grade = 9,
-                    //        HireDate = DateTime.Parse("2015-12-05"),
-                    //        ID = 8
-                    //    }
+                    HireDate = DateTime.Parse("2018-02-05"),
+                    ID = 1,
+                    PerformanceManager = manager
 
                 },
                 new Employee
@@ -51,16 +54,9 @@ namespace GridFilteringMVC.Data
                     EmployeeName = "Kamila",
                     Grade = 9,
                     HireDate = DateTime.Parse("2015-12-05"),
-                    ID = 2
-                    //PerformanceManager =
-                    //    new Employee
-                    //    {
-                    //        DepartmentID = 2,
-                    //        EmployeeName = "Igor",
-                    //        Grade = 7,
-                    //        HireDate = DateTime.Parse("2017-12-05"),
-                    //        ID = 9
-                    //    }
+                    ID = 2,
+                    PerformanceManager = manager
+
                 },
                 new Employee
                 {
@@ -68,7 +64,8 @@ namespace GridFilteringMVC.Data
                     EmployeeName = "Oskar",
                     Grade = 10,
                     HireDate = DateTime.Parse("2014-02-05"),
-                    ID = 3
+                    ID = 3,
+                    PerformanceManager = manager
 
                 },
                 new Employee
@@ -86,7 +83,8 @@ namespace GridFilteringMVC.Data
                     EmployeeName = "Michał",
                     Grade = 10,
                     HireDate = DateTime.Parse("2012-02-05"),
-                    ID = 5
+                    ID = 5,
+                    PerformanceManager = manager
 
                 },
                 new Employee
@@ -95,8 +93,7 @@ namespace GridFilteringMVC.Data
                     EmployeeName = "Karolina",
                     Grade = 10,
                     HireDate = DateTime.Parse("2010-02-05"),
-                    ID = 6,
-
+                    ID = 6
 
                 },
                 new Employee
@@ -105,9 +102,10 @@ namespace GridFilteringMVC.Data
                     EmployeeName = "Olaf",
                     Grade = 10,
                     HireDate = DateTime.Parse("2009-03-05"),
-                    ID = 7
+                    ID = 7,
+                    PerformanceManager = manager
 
-                },
+                }
 
             };
 

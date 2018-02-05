@@ -115,31 +115,13 @@
 
         });
     });
-
-    function getFormattedDate(date) {
-        var year = date.getFullYear();
-
-        var month = (1 + date.getMonth()).toString();
-        month = month.length > 1 ? month : '0' + month;
-
-        var day = date.getDate().toString();
-        day = day.length > 1 ? day : '0' + day;
-
-        return day + '/' + month + '/' + year;
-    }
-
-    function getDate(date) {
-        var jsDate = new Date(parseInt(date(/[^0-9 +]/g, '')));
-        return jsDate;
-
-    }
-
+    
     function populateGrid(employees) {
         var gridBody = $("#gridBody");
         gridBody.empty();
         for (var i = 0; i < employees.length; i++) {
             console.log(employees[i]);
-            gridBody.append("<tr><td>" + employees[i].EmployeeName + " </td> <td>" + employees[i].HireDate + " </td> " +
+            gridBody.append("<tr><td>" + employees[i].EmployeeName + " </td> <td>" + moment(employees[i].HireDate).format("MMM Do YYYY") + " </td> " +
                 "<td>" + employees[i].Grade + " </td> <td>" + employees[i].DepartmentName + " </td> " +
                 "<td>" + employees[i].PerformanceManagerName + " </td> " + " </tr > ");
         }
@@ -160,6 +142,8 @@
 
 
     $(document).ready(function () {
+        
+
         initGrid();
 
         $("#managerFilter").on("change",
@@ -187,29 +171,51 @@
         });
 
         $("#nameFilter").on("change",
-            function () {
-                $("#divLoaderName").show();  
+            function() {
+                $("#divLoaderName").show();
                 var filterValue = $(this).val();
-                
-                $.ajax({
 
+                $.ajax({
                     url: "/Home/GetEmployeesByName",
                     type: "get",
                     data: { search: filterValue },
-                    complete: function (data) {
-                       
+                    complete: function(data) {
+
                         var employees = data.responseJSON;
                         populateGrid(employees);
                     },
                     error: function() {
-                        $("#divLoaderName").hide(); 
+                        $("#divLoaderName").hide();
                     },
-                    success: function () {
-                        $("#divLoaderName").hide();  
+                    success: function() {
+                        $("#divLoaderName").hide();
                     }
-                    });
+                });
+
             });
 
+            //$("#nameFilter").autocomplete({
+            //    source: function(request, response) {
+            //        $.ajax({
+            //            async: true,
+            //            type: "post",
+            //            contentType: "application/json; charset=utf-8",
+            //            url: '/Home/AutoCompleteEmployeeName/',
+            //            data: "{ 'text': '" + request.text + "'}",
+            //            dataType: "json",
+            //            minLength: 1,
+            //            success: function(data) {
+            //                response(data);
+            //            },
+            //            error: function(err) {
+            //                alert(err);
+            //            }
+
+
+            //        });
+            //    }
+            //});
+               
         $("#departmentFilter").on("change", function () {
             $("#divLoaderDepartment").show();  
             var filterValue = 
