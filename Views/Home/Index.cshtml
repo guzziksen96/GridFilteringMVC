@@ -1,0 +1,215 @@
+﻿
+@model IEnumerable<GridFilteringMVC.Models.EmployeeViewModel>
+
+<div class="jumbotron">
+    <label for="nameFilter">Find emplyee by name: </label>
+    <input id="nameFilter" type="text" class="form-control" />
+
+    <label>Find emplyee hired after date: </label>
+    @Html.TextBox("Hire date", "{0:dd/MM/yyyy}", new { @class = "form-control datetimepicker " })
+    
+
+    <label>Find employee by department: </label>
+    <form asp-action="GetEmployeesByDepartment" method="get">
+        <div class="form-actions no-color">
+            @Html.DropDownList("departmentFilter", (IEnumerable<SelectListItem>)ViewBag.Departments,
+                "Select Department")
+            <p>Selected Department: <label id="lbltxt"></label><br /><br /></p>
+        </div>
+    </form>
+
+    <label>Find emplyee by grade: </label>
+    @Html.DropDownList("gradeFilter", Enumerable.Range(1, 10)
+    .Select(x => new SelectListItem
+    {
+        Text = x.ToString(),
+        Value = x.ToString()
+    }))
+    
+    <label>Find employee by performance manager name: </label>
+    <form asp-action="GetEmployeesByManager" method="get">
+        <div class="form-actions no-color">
+            @Html.DropDownList("managerFilter", (IEnumerable<SelectListItem>)ViewBag.Employees,
+                String.Empty)
+            <p>Selected Manager: <label id="managertxt"></label><br /><br /></p>
+        </div>
+    </form>
+
+    <table id="grid" class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.EmployeeName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.HireDate)
+                    
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Grade)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.DepartmentName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.PerformanceManagerName)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="gridBody"></tbody>
+    </table>
+</div>
+
+<script>
+
+    $('.datetimepicker').datetimepicker();
+
+    $(function () {
+
+        $('#departmentFilter').change(function () {
+
+            $("#lbltxt").text($("#departmentFilter option:selected").text());
+
+        });
+    });
+
+    $(function () {
+
+        $('#managerFilter').change(function () {
+
+            $("#managertxt").text($("#managerFilter option:selected").text());
+
+        });
+    });
+
+    function getFormattedDate(date) {
+        var year = date.getFullYear();
+
+        var month = (1 + date.getMonth()).toString();
+        month = month.length > 1 ? month : '0' + month;
+
+        var day = date.getDate().toString();
+        day = day.length > 1 ? day : '0' + day;
+
+        return day + '/' + month + '/' + year;
+    }
+
+    function getDate(date) {
+        var jsDate = new Date(parseInt(date(/[^0-9 +]/g, '')));
+        return jsDate;
+
+    }
+
+    function populateGrid(employees) {
+        var gridBody = $("#gridBody");
+        gridBody.empty();
+        for (var i = 0; i < employees.length; i++) {
+            console.log(employees[i]);
+            gridBody.append("<tr><td>" + employees[i].EmployeeName + " </td> <td>" + employees[i].HireDate + " </td> " +
+                "<td>" + employees[i].Grade + " </td> <td>" + employees[i].DepartmentName + " </td> " +
+                "<td>" + employees[i].PerformanceManagerName + " </td> " + " </tr > ");
+        }
+    }
+
+    function initGrid() {
+
+        $.ajax({
+            url: "/Home/GetEmployees",
+            type: "get",
+            complete: function (data) {
+                var employees = data.responseJSON;
+                populateGrid(employees);
+            }
+        });
+
+    };
+
+
+    $(document).ready(function () {
+        initGrid();
+
+       
+
+        $("#nameFilter").on("change", function () {
+
+            var filterValue = $(this).val();
+
+            $.ajax({
+                url: "/Home/GetEmployeesByName",
+                type: "get",
+                data: { search: filterValue },
+                complete: function (data) {
+                    var employees = data.responseJSON;
+                    populateGrid(employees);
+                }
+            });
+
+        });
+        $("#departmentFilter").on("change", function () {
+
+            var filterValue = 
+                $("#departmentFilter option:selected").text();
+            $.ajax({
+                url: "/Home/GetEmployeesByDepartment",
+                type: "get",
+                data: { DepartmentName: filterValue },
+                complete: function (data) {
+                    var employees = data.responseJSON;
+                    populateGrid(employees);
+                }
+            });
+
+        });
+
+        $("#gradeFilter").on("change", function () {
+
+            var filterValue = $(this).val();
+                //$("#gradeFilter option:selected").text();
+            $.ajax({
+                url: "/Home/GetEmployeeByGrade",
+                type: "get",
+                data: { grade: filterValue },
+                complete: function (data) {
+                    var employees = data.responseJSON;
+                    populateGrid(employees);
+                }
+            });
+
+        });
+
+        $("#hiredateFilter").on("change", function () {
+
+            var filterValue = /*$(this).val();*/
+                $("#hiredateFilter option:selected").text();
+            $.ajax({
+                url: "/Home/GetEmployeesHiredAfter",
+                type: "get",
+                data: { hireDate: filterValue },
+                complete: function (data) {
+                    var employees = data.responseJSON;
+                    populateGrid(employees);
+                }
+            });
+
+        });
+
+        $("#managerFilter").on("change", function () {
+
+            var filterValue =
+                $("#managerFilter option:selected").text();
+            $.ajax({
+                url: "/Home/GetEmployeesByManager",
+                type: "get",
+                data: { manager: filterValue },
+                complete: function (data) {
+                    var employees = data.responseJSON;
+                    populateGrid(employees);
+                }
+            });
+
+        });
+    });
+
+
+</script>
