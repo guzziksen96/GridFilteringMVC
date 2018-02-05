@@ -31,9 +31,9 @@ namespace GridFilteringMVC.Controllers
             return View();
         }
 
-        public ActionResult GetEmployeesByDepartment(string DepartmentName)
+        public async Task<ActionResult> GetEmployeesByDepartment(string DepartmentName)
         {
-            var departments = db.Departments.ToList();
+            var departments = await db.Departments.ToListAsync();
             ViewBag.Departments = new SelectList(departments, "DepartmentID", "DepartmentName");
 
             List<Employee> employees = db.Employees.ToList();
@@ -47,9 +47,9 @@ namespace GridFilteringMVC.Controllers
             return Json(employeeViewModels, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult GetEmployees()
+        public async Task<ActionResult> GetEmployees()
         {
-            var employees = db.Employees.ToList();
+            var employees = await db.Employees.ToListAsync();
 
             List<EmployeeViewModel> employeeViewModels = new List<EmployeeViewModel>();
 
@@ -84,9 +84,9 @@ namespace GridFilteringMVC.Controllers
 
         }
 
-        public ActionResult GetEmployeesByName(string search)
+        public async Task<ActionResult> GetEmployeesByName(string search)
         {
-            var employees = db.Employees.Where(emp => emp.EmployeeName.ToLower().Contains(search.ToLower()));
+            var employees = await db.Employees.Where(emp => emp.EmployeeName.ToLower().Contains(search.ToLower())).ToListAsync();
 
             List<EmployeeViewModel> employeeViewModels = new List<EmployeeViewModel>();
 
@@ -100,10 +100,9 @@ namespace GridFilteringMVC.Controllers
 
         }
 
-        public ActionResult GetEmployeeByGrade(int grade)
+        public async Task<ActionResult> GetEmployeeByGrade(int grade)
         {
-            var employees = db.Employees.Where(p =>
-                p.Grade == grade).ToList();
+            var employees = await db.Employees.Where(p => p.Grade == grade).ToListAsync();
 
             List<EmployeeViewModel> employeeViewModels = new List<EmployeeViewModel>();
             foreach (var emp in employees)
@@ -111,35 +110,45 @@ namespace GridFilteringMVC.Controllers
                 employeeViewModels.Add(convertToEmployeeViewModel(emp));
             }
 
-            return Json(employeeViewModels);
+            return Json(employeeViewModels, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult GetEmployeesByManager(string Manager)
+        public async Task<ActionResult> GetEmployeesByManager(string manager)
         {
-            List<Employee> employees = db.Employees.ToList();
-            var empByManager = employees.Where(x => x.PerformanceManager.EmployeeName.Equals(Manager));
+            List<Employee> employees = await db.Employees.ToListAsync();
+           
+            //var empByManager = employees.Where(x => x.PerformanceManager.EmployeeName.Equals(manager)).ToList();
+
             List<EmployeeViewModel> employeeViewModels = new List<EmployeeViewModel>();
             
-            foreach (var emp in empByManager)
+            foreach (var emp in employees)
             {
                 employeeViewModels.Add(convertToEmployeeViewModel(emp));
             }
-            return Json(employeeViewModels);
+            var result = new List<EmployeeViewModel>();
+
+            foreach (var emp in employeeViewModels)
+            {
+                if (emp.PerformanceManagerName.Equals(manager))
+                {
+                    result.Add(emp);
+                }
+            }
+
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult GetEmployeesHiredAfter(DateTime hireDate)
+        public async Task<ActionResult> GetEmployeesHiredAfter(DateTime hireDate)
         {
-            List<Employee> employees = db.Employees.ToList();
-
-            var empHiredAfter = employees.Where(x => x.HireDate >= hireDate);
-
+            List<Employee> employees = await db.Employees.ToListAsync();
+            var empHiredAfter = employees.Where(e => e.HireDate.CompareTo(hireDate) >= 0);
             List<EmployeeViewModel> employeeViewModels = new List<EmployeeViewModel>();
-
+           
             foreach (var emp in empHiredAfter)
             {
                 employeeViewModels.Add(convertToEmployeeViewModel(emp));
             }
-            return Json(employeeViewModels);
+            return Json(employeeViewModels, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -159,16 +168,14 @@ namespace GridFilteringMVC.Controllers
             return employeeViewModel;
         }
 
-
-        private SelectListItem GetPerformanceManager(int ID)
+        protected override void Dispose(bool disposing)
         {
-            var employee = db.Employees.Find(ID);
-
-            SelectListItem si = new SelectListItem { Value = employee.PerformanceManager.ID.ToString(), Text = employee.PerformanceManager.EmployeeName };
-
-            return si;
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
         }
-
 
     }
 }

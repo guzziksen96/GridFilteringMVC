@@ -1,36 +1,44 @@
 ﻿
 @model IEnumerable<GridFilteringMVC.Models.EmployeeViewModel>
 
+<script src="~/Scripts/bootstrap-datepicker.js"></script>
+<link href="~/Content/bootstrap-datepicker.css" rel="stylesheet" />
+<script src="~/Content/ajaxloader.js"></script>
+
 <div class="jumbotron">
     <label for="nameFilter">Find emplyee by name: </label>
-    <input id="nameFilter" type="text" class="form-control" />
+    <input id="nameFilter" type="text" class="form-control" /><div id="divLoaderName" style="display:none;"> <img src="~/Content/ajax-loader.gif" alt="Loader" /></div> 
 
-    <label>Find emplyee hired after date: </label>
-    @Html.TextBox("Hire date", "{0:dd/MM/yyyy}", new { @class = "form-control datetimepicker " })
-    
+    <p><label>Find emplyee hired after date: </label></p>
+    @Html.TextBox("hiredateFilter", "Select the date", new { @class = "datepicker" })
+    <div id="divLoaderHireDate" style="display:none;"> <img src="~/Content/ajax-loader.gif" alt="Loader" /></div> 
 
-    <label>Find employee by department: </label>
+    <p><label>Find employee by department: </label></p>
     <form asp-action="GetEmployeesByDepartment" method="get">
         <div class="form-actions no-color">
             @Html.DropDownList("departmentFilter", (IEnumerable<SelectListItem>)ViewBag.Departments,
                 "Select Department")
+            <div id="divLoaderDepartment" style="display:none;"> <img src="~/Content/ajax-loader.gif" alt="Loader" /></div> 
             <p>Selected Department: <label id="lbltxt"></label><br /><br /></p>
         </div>
     </form>
 
     <label>Find emplyee by grade: </label>
+
     @Html.DropDownList("gradeFilter", Enumerable.Range(1, 10)
     .Select(x => new SelectListItem
     {
         Text = x.ToString(),
         Value = x.ToString()
     }))
-    
-    <label>Find employee by performance manager name: </label>
+    <div id="divLoaderGrade" style="display:none;"> <img src="~/Content/ajax-loader.gif" alt="Loader" /></div> 
+    <p><label>Find employee by performance manager name: </label></p>
+   
     <form asp-action="GetEmployeesByManager" method="get">
         <div class="form-actions no-color">
             @Html.DropDownList("managerFilter", (IEnumerable<SelectListItem>)ViewBag.Employees,
                 String.Empty)
+            <div id="divLoaderManager" style="display:none;"> <img src="~/Content/ajax-loader.gif" alt="Loader" /></div> 
             <p>Selected Manager: <label id="managertxt"></label><br /><br /></p>
         </div>
     </form>
@@ -39,20 +47,20 @@
         <thead class="thead-dark">
             <tr>
                 <th>
-                    @Html.DisplayNameFor(model => model.EmployeeName)
+                    @Html.DisplayName("Employee name")
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.HireDate)
+                    @Html.DisplayName("Hire date")
                     
                 </th>
                 <th>
                     @Html.DisplayNameFor(model => model.Grade)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.DepartmentName)
+                    @Html.DisplayName("Department")
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.PerformanceManagerName)
+                    @Html.DisplayName("Performance manager")
                 </th>
                 <th></th>
             </tr>
@@ -60,11 +68,36 @@
         <tbody id="gridBody"></tbody>
     </table>
 </div>
-
 <script>
 
     $('.datetimepicker').datetimepicker();
 
+    $('.datepicker').datepicker({
+            format: 'dd/mm/yyyy',
+            language: "EN",
+            orientation: 'left bottom',
+            autoclose: true
+            //onSelect: function(dateText) {
+            //    display("Selected date: " + dateText + "; input's current value: " + this.value);
+            //    $(this).change();
+
+            //}
+        })
+        .on("change",
+            function() {
+                var filterValue = $('#hiredateFilter').datepicker('getDate').toISOString();
+                $.ajax({
+                    url: "/Home/GetEmployeesHiredAfter",
+                    type: "get",
+                    data: { hireDate: filterValue },
+                    complete: function(data) {
+                        var employees = data.responseJSON;
+                        populateGrid(employees);
+                    }
+                });
+            });
+       
+        
     $(function () {
 
         $('#departmentFilter').change(function () {
@@ -129,25 +162,56 @@
     $(document).ready(function () {
         initGrid();
 
-       
-
-        $("#nameFilter").on("change", function () {
-
-            var filterValue = $(this).val();
-
+        $("#managerFilter").on("change",
+            function () {
+                $("#divLoaderManager").show();  
+                var filterValue = $("#managerFilter option:selected").text();
             $.ajax({
-                url: "/Home/GetEmployeesByName",
+                url: "/Home/GetEmployeesByManager",
                 type: "get",
-                data: { search: filterValue },
+                data: { manager: filterValue },
                 complete: function (data) {
+                    
                     var employees = data.responseJSON;
+
                     populateGrid(employees);
+                },
+                error: function () {
+                    $("#divLoaderManager").hide();
+                },
+                success: function () {
+                    $("#divLoaderManager").hide();  
                 }
             });
 
         });
-        $("#departmentFilter").on("change", function () {
 
+        $("#nameFilter").on("change",
+            function () {
+                $("#divLoaderName").show();  
+                var filterValue = $(this).val();
+                
+                $.ajax({
+
+                    url: "/Home/GetEmployeesByName",
+                    type: "get",
+                    data: { search: filterValue },
+                    complete: function (data) {
+                       
+                        var employees = data.responseJSON;
+                        populateGrid(employees);
+                    },
+                    error: function() {
+                        $("#divLoaderName").hide(); 
+                    },
+                    success: function () {
+                        $("#divLoaderName").hide();  
+                    }
+                    });
+            });
+
+        $("#departmentFilter").on("change", function () {
+            $("#divLoaderDepartment").show();  
             var filterValue = 
                 $("#departmentFilter option:selected").text();
             $.ajax({
@@ -157,31 +221,43 @@
                 complete: function (data) {
                     var employees = data.responseJSON;
                     populateGrid(employees);
+                },
+                success: function() {
+                    $("#divLoaderDepartment").hide();  
+                },
+                error: function() {
+                    $("#divLoaderDepartment").hide();  
                 }
             });
 
         });
-
         $("#gradeFilter").on("change", function () {
-
+            $("#divLoaderGrade").show();  
             var filterValue = $(this).val();
-                //$("#gradeFilter option:selected").text();
+          
             $.ajax({
                 url: "/Home/GetEmployeeByGrade",
                 type: "get",
                 data: { grade: filterValue },
+                error: function() {
+                    $("#divLoaderGrade").hide(); 
+                    alert('error'); 
+                },
                 complete: function (data) {
                     var employees = data.responseJSON;
                     populateGrid(employees);
+                },
+                success: function () {
+                    $("#divLoaderGrade").hide();  
                 }
             });
 
         });
 
         $("#hiredateFilter").on("change", function () {
-
-            var filterValue = /*$(this).val();*/
-                $("#hiredateFilter option:selected").text();
+            $("#divLoaderHireDate").show();  
+            var filterValue = $('#hiredateFilter').datepicker('getDate').toISOString();
+              
             $.ajax({
                 url: "/Home/GetEmployeesHiredAfter",
                 type: "get",
@@ -189,26 +265,17 @@
                 complete: function (data) {
                     var employees = data.responseJSON;
                     populateGrid(employees);
+                },
+                error: function () {
+                    $("#divLoaderHireDate").hide();
+                },
+                success: function () {
+                    $("#divLoaderHireDate").hide();  
                 }
             });
 
         });
-
-        $("#managerFilter").on("change", function () {
-
-            var filterValue =
-                $("#managerFilter option:selected").text();
-            $.ajax({
-                url: "/Home/GetEmployeesByManager",
-                type: "get",
-                data: { manager: filterValue },
-                complete: function (data) {
-                    var employees = data.responseJSON;
-                    populateGrid(employees);
-                }
-            });
-
-        });
+        
     });
 
 
